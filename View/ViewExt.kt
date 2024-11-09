@@ -215,7 +215,16 @@ fun View.clearMargins() {
     this.draw(canvas)
     return bitmap
 }
- 
+
+ /**
+ * Convert a View into a Bitmap for processing or saving
+ */
+ fun View.toBitmap(): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    draw(canvas)
+    return bitmap
+}
 
 /**
  * add custom divider to recycler view
