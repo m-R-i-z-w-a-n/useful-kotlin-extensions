@@ -1,0 +1,285 @@
+fun ImageView.setImageFromResource(imageId: Int) {
+    this.load(imageId) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+    }
+}
+
+fun ImageView.setImageFromBitmap(bitmap: Bitmap) {
+    this.load(bitmap) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+    }
+}
+
+fun ImageView.setImageFromUri(lifecycleOwner: LifecycleOwner, imageUri: Uri?, listener: ImageRequest.Listener? = null, addPlaceHolders: Boolean = true) {
+    this.load(imageUri) {
+        if (addPlaceHolders) {
+//            placeholder(R.drawable.image_placeholder)
+//            error(R.drawable.image_error)
+        }
+        lifecycle(lifecycleOwner)
+        crossfade(true)
+        listener(listener)
+    }
+}
+
+fun ImageView.setImageFromUri(imageUri: Uri?, listener: ImageRequest.Listener? = null) {
+    this.load(imageUri) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+        listener(listener)
+    }
+}
+
+fun ImageView.setImageFromFile(imageFile: File, listener: ImageRequest.Listener? = null) {
+    try {
+        if (imageFile.exists()) {
+            this.load(imageFile) {
+//                scaleType = ImageView.ScaleType.FIT_XY
+                crossfade(true)
+//                placeholder(R.drawable.image_placeholder)
+//                error(R.drawable.image_error)
+                listener(listener)
+            }
+        }
+    } catch (ex: SecurityException) {
+        Log.e("TAG_ERROR", "setImageFromFilePath: ", ex)
+    }
+}
+
+fun ImageView.setImageFromDrawable(imageDrawable: Drawable?) {
+    this.load(imageDrawable) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+    }
+}
+
+fun ImageView.setImageFromAssets(imageAsset: String) {
+    this.load(Uri.parse("file:///android_asset/flags/$imageAsset.webp")) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+    }
+}
+
+/**
+ * @param: tintImg -> Set attribute tint color for this
+ */
+/*@BindingAdapter("tintImg")
+fun ImageView.setImageTint(isSelected: Boolean) {
+    val color = if (isSelected) {
+        val typedArray = context.theme.obtainStyledAttributes(intArrayOf(R.attr.colorFromAttribute))
+        val textColor = typedArray.getColor(0, 0)
+        typedArray.recycle()
+        textColor
+    } else {
+        ContextCompat.getColor(context, R.color.normalColor)
+    }
+    setColorFilter(color)
+}*/
+
+/**
+ * @param: circleImage -> Load image as circular image
+ *  Syntax:
+ *      xml     -> app:circleImage="@{imageUrl}"
+ */
+fun ImageView.setCircleImage(imageUrl: String?) {
+    this.load(imageUrl) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+        transformations(CircleCropTransformation())
+    }
+}
+
+/**
+ * @param: fadeImage -> Load image with fade-in animation
+ *  Syntax:
+ *      xml     -> app:fadeImage="@{imageUrl}"
+ */
+fun ImageView.setFadeImage(imageUrl: String?) {
+    this.load(imageUrl) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+    }
+}
+
+/**
+ * @param: roundedCornersImage -> Load image with rounded corners
+ * @param: cornerRadius -> Specify the radius for the rounded corners
+ */
+fun ImageView.setRoundedCornersImage(imageUrl: String?, cornerRadius: Float = 16f) {
+    this.load(imageUrl) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+        transformations(RoundedCornersTransformation(cornerRadius))
+    }
+}
+
+fun ImageView.setNoCacheImage(imageUrl: String?) {
+    this.load(imageUrl) {
+        crossfade(true)
+//        placeholder(R.drawable.image_placeholder)
+//        error(R.drawable.image_error)
+        diskCachePolicy(CachePolicy.DISABLED)
+        memoryCachePolicy(CachePolicy.DISABLED)
+    }
+}
+
+fun Context.preloadImage(data: Any) {
+    try {
+        val request = ImageRequest.Builder(this)
+            .data(data)
+            .build()
+
+        imageLoader.enqueue(request)
+    } catch (ex: Exception) {
+        ex.printStackTrace()
+    }
+}
+
+suspend fun Context.getBitmapFromResource(
+    @DrawableRes imageId: Int
+): Bitmap? = withContext(Dispatchers.IO) {
+    val request = ImageRequest.Builder(this@getBitmapFromResource)
+        .data(imageId)
+        .build()
+
+    var bitmap: Bitmap? = null
+
+    val result = imageLoader.execute(request)
+    if (result is SuccessResult) {
+        bitmap = result.image.toBitmap()
+    }
+
+    return@withContext bitmap
+}
+
+suspend fun Context.getBitmapFromUri(uri: Uri?): Bitmap? = withContext(Dispatchers.IO) {
+    val request = ImageRequest.Builder(this@getBitmapFromUri)
+        .data(uri)
+        .build()
+
+    var bitmap: Bitmap? = null
+
+    val result = imageLoader.execute(request)
+    if (result is SuccessResult) {
+        bitmap = result.image.toBitmap()
+    }
+
+    return@withContext bitmap
+}
+
+suspend fun Context.getBitmapFromFile(file: File): Bitmap? = withContext(Dispatchers.IO) {
+    try {
+        if (file.exists()) {
+            val request = ImageRequest.Builder(this@getBitmapFromFile)
+                .data(file)
+                .build()
+
+            var bitmap: Bitmap? = null
+
+            val result = imageLoader.execute(request)
+            if (result is SuccessResult) {
+                // Successfully loaded the image and converted to Bitmap
+                bitmap = result.image.toBitmap()
+            }
+
+            return@withContext bitmap
+        }
+    } catch (ex: SecurityException) {
+        ex.printStackTrace()
+    }
+    return@withContext null
+}
+
+suspend fun Context.getBitmapFromDrawable(drawable: Drawable?): Bitmap? = withContext(Dispatchers.IO) {
+    val request = ImageRequest.Builder(this@getBitmapFromDrawable)
+        .data(drawable)
+        .build()
+
+    var bitmap: Bitmap? = null
+
+    val result = imageLoader.execute(request)
+    if (result is SuccessResult) {
+        // Successfully loaded the image and converted to Bitmap
+        bitmap = result.image.toBitmap()
+    }
+
+    return@withContext bitmap
+}
+
+suspend fun Context.getBitmapFromAssets(assetPath: String): Bitmap? = withContext(Dispatchers.IO) {
+    val uri = Uri.parse("file:///android_asset/$assetPath")
+    val request = ImageRequest.Builder(this@getBitmapFromAssets)
+        .data(uri)
+        .build()
+
+    var bitmap: Bitmap? = null
+
+    val result = imageLoader.execute(request)
+    if (result is SuccessResult) {
+        // Successfully loaded the image and converted to Bitmap
+        bitmap = result.image.toBitmap()
+    }
+
+    return@withContext bitmap
+}
+
+suspend fun Context.downloadImageAsTempFile(imageUrl: String, fileName: String? = null): File? = withContext(Dispatchers.IO) {
+    val request = ImageRequest.Builder(this@downloadImageAsTempFile)
+        .data(imageUrl)
+        .build()
+
+    val result = imageLoader.execute(request)
+    if (result is SuccessResult) {
+        val name = fileName ?: imageUrl.substringBeforeLast(".").substringAfterLast("/")
+
+        val bitmap = result.image.toBitmap()
+        val tempFile = File.createTempFile(name, ".jpg", cacheDir)
+
+        tempFile.outputStream().use { outputStream ->
+            withContext(Dispatchers.Default) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            }
+        }
+
+        return@withContext tempFile
+    }
+
+   return@withContext null
+}
+
+suspend fun Context.saveImageInInternalStorage(drawable: Drawable?, fileName: String): File? = withContext(Dispatchers.IO) {
+    val bitmap = getBitmapFromDrawable(drawable)
+    val deletedAppsFolder = File(filesDir, "Deleted Apps")
+    if (deletedAppsFolder.exists().not()) {
+        deletedAppsFolder.mkdirs()
+    }
+
+    // Sanitize filename: replace only problematic characters while keeping spaces and other safe symbols
+    val sanitizedFileName = fileName
+        .replace("/", "-")  // Replace forward slashes with dash
+        .replace(":", "-")   // Replace colons with dash
+        .replace(Regex("[\\\\:*?\"<>|]"), "") // Remove other invalid characters
+
+    val file = File(deletedAppsFolder, "$sanitizedFileName.png")
+
+    file.outputStream().use { outputStream ->
+        withContext(Dispatchers.Default) {
+            bitmap?.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        }
+    }
+
+    if (file.exists() && file.length() > 0)
+        return@withContext file
+
+    return@withContext null
+}
