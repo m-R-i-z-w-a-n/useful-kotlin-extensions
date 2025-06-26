@@ -1,0 +1,73 @@
+fun Long.toFormattedTime(format: String = ""): String {
+    val millis = this
+    val sdf = SimpleDateFormat(format.ifBlank { "hh:mm a" }, Locale.getDefault())
+    val date = Date(millis)
+    return sdf.format(date).uppercase()
+}
+
+fun Long.toFormattedDate(format: String = ""): String {
+    val millis = this
+    val sdf = SimpleDateFormat(format.ifBlank { "MMM d, yyyy" }, Locale.getDefault())
+    val date = Date(millis)
+    return sdf.format(date)
+}
+
+fun Long.getMessageTime(): String {
+    val millis = this
+    val currentTime = System.currentTimeMillis()
+    val timeDifference = currentTime - millis
+
+    val minutesAgo = timeDifference / (60 * 1000)
+    val hoursAgo = timeDifference / (60 * 60 * 1000)
+    val daysAgo = timeDifference / (24 * 60 * 60 * 1000)
+
+    val displayTime: String = when {
+        daysAgo > 0 -> "$daysAgo day${if (daysAgo > 1) "s" else ""} ago"
+        hoursAgo > 0 -> "$hoursAgo h ago"
+        else -> "$minutesAgo min ago"
+    }
+
+    return displayTime
+}
+
+fun Context.getRelativeTimeSpanString(millis: Long): String {
+    val now = System.currentTimeMillis()
+    return when {
+        millis.isToday() -> DateUtils.getRelativeTimeSpanString(
+            millis,
+            now,
+            DateUtils.DAY_IN_MILLIS
+        ).toString()
+
+        millis.isYesterday() -> getString(R.string.yesterday)
+        else -> millis.toFormattedDate()
+    }
+}
+
+fun Long.isToday(): Boolean {
+    val millis = this
+    val calendar = Calendar.getInstance()
+    val today = calendar.timeInMillis
+    return DateUtils.isToday(millis) || abs(today - millis) < DateUtils.DAY_IN_MILLIS
+}
+
+fun Long.isYesterday(): Boolean {
+    val millis = this
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.DAY_OF_YEAR, -1)
+    val yesterday = calendar.timeInMillis
+    return DateUtils.isToday(millis) || abs(yesterday - millis) < DateUtils.DAY_IN_MILLIS
+}
+
+fun Long.formatDuration(): String {
+    val millis = this
+    val seconds = millis / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+
+    return when {
+        hours > 0 -> String.format(Locale.ENGLISH, "%dh %02dm %02ds", hours, minutes % 60, seconds % 60)
+        minutes > 0 -> String.format(Locale.ENGLISH, "%dm %02ds", minutes, seconds % 60)
+        else -> String.format(Locale.ENGLISH, "%ds", seconds)
+    }
+}
